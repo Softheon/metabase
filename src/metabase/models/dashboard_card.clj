@@ -14,7 +14,8 @@
             [toucan
              [db :as db]
              [hydrate :refer [hydrate]]
-             [models :as models]]))
+             [models :as models]]
+            [metabase.models.pulse-card :as pulse-card]))
 
 (models/defmodel DashboardCard :report_dashboardcard)
 
@@ -139,7 +140,8 @@
 
 (s/defn create-dashboard-card!
   "Create a new DashboardCard by inserting it into the database along with all associated pieces of data such as
-   DashboardCardSeries. Returns the newly created DashboardCard or throws an Exception."
+  DashboardCardSeries. Adds appropriate PulseCards as well. Returns the newly created DashboardCard or throws an
+  Exception."
   [dashboard-card :- NewDashboardCard]
   (let [{:keys [dashboard_id card_id creator_id parameter_mappings visualization_settings sizeX sizeY row col series]
          :or   {sizeX 2, sizeY 2, series []}} dashboard-card]
@@ -153,6 +155,9 @@
                                               :col                    (or col 0)
                                               :parameter_mappings     (or parameter_mappings [])
                                               :visualization_settings (or visualization_settings {}))]
+        (doseq [pulse-id TODO-MAGIC]
+          (pulse-card/create! {:card_id card_id
+                               :pulse_id pulse-id}))
         ;; add series to the DashboardCard
         (update-dashboard-card-series! dashboard-card series)
         ;; return the full DashboardCard (and record our create event)
